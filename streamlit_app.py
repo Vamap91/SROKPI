@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO DA PÁGINA
@@ -17,272 +16,232 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════════════
-# CSS CUSTOMIZADO
+# PALETA CARGLASS
 # ══════════════════════════════════════════════════════════════
-st.markdown("""
+CARGLASS_RED = "#D32F2F"
+CARGLASS_RED_DARK = "#B71C1C"
+CARGLASS_PURPLE = "#7B1FA2"
+CARGLASS_PURPLE_BG = "#8E24AA"
+CARGLASS_WHITE = "#FFFFFF"
+CARGLASS_GRAY_BG = "#F5F5F5"
+CARGLASS_GRAY_LIGHT = "#EEEEEE"
+CARGLASS_GRAY_TEXT = "#757575"
+CARGLASS_DARK_TEXT = "#212121"
+
+# ══════════════════════════════════════════════════════════════
+# CSS — PADRÃO CARGLASS (fundo branco, header vermelho, cards roxos)
+# ══════════════════════════════════════════════════════════════
+st.markdown(f"""
 <style>
-    /* Fundo geral */
-    .stApp { background-color: #0E1117; }
-
-    /* Cards de métricas */
-    .metric-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 16px;
-        padding: 24px;
-        text-align: center;
-        border: 1px solid #2a2a4a;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-    }
-    .metric-card:hover { transform: translateY(-2px); }
-    .metric-value {
-        font-size: 42px;
-        font-weight: 800;
-        margin: 8px 0;
-        line-height: 1;
-    }
-    .metric-label {
-        font-size: 13px;
-        color: #8892b0;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        font-weight: 600;
-    }
-    .metric-sub {
-        font-size: 12px;
-        color: #5a6785;
-        margin-top: 4px;
-    }
-
-    /* Cards de urgência */
-    .urgency-critical {
-        background: linear-gradient(135deg, #2d0a0a 0%, #4a1111 100%);
-        border: 1px solid #ff4b4b;
+    .stApp {{
+        background-color: {CARGLASS_WHITE};
+    }}
+    section[data-testid="stSidebar"] {{
+        background-color: {CARGLASS_GRAY_BG};
+        border-right: 2px solid {CARGLASS_GRAY_LIGHT};
+    }}
+    section[data-testid="stSidebar"] * {{
+        color: {CARGLASS_DARK_TEXT} !important;
+    }}
+    .carglass-header {{
+        background: linear-gradient(135deg, {CARGLASS_RED} 0%, {CARGLASS_RED_DARK} 100%);
+        color: white;
+        padding: 20px 32px;
         border-radius: 12px;
-        padding: 16px;
-        margin: 6px 0;
-    }
-    .urgency-high {
-        background: linear-gradient(135deg, #2d1a0a 0%, #4a2a11 100%);
-        border: 1px solid #ff8c00;
+        margin-bottom: 24px;
+    }}
+    .carglass-header h1 {{
+        margin: 0; font-size: 24px; font-weight: 800; color: white;
+    }}
+    .carglass-header p {{
+        margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.85);
+    }}
+    .kpi-card {{
+        background: linear-gradient(135deg, {CARGLASS_PURPLE} 0%, {CARGLASS_PURPLE_BG} 100%);
         border-radius: 12px;
-        padding: 16px;
-        margin: 6px 0;
-    }
-    .urgency-medium {
-        background: linear-gradient(135deg, #2d2a0a 0%, #4a4211 100%);
-        border: 1px solid #ffd700;
-        border-radius: 12px;
-        padding: 16px;
-        margin: 6px 0;
-    }
-    .urgency-low {
-        background: linear-gradient(135deg, #0a2d0e 0%, #114a18 100%);
-        border: 1px solid #00c851;
-        border-radius: 12px;
-        padding: 16px;
-        margin: 6px 0;
-    }
-
-    /* Header da urgência */
-    .urgency-header {
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin-bottom: 4px;
-    }
-    .urgency-count {
-        font-size: 32px;
-        font-weight: 800;
-        line-height: 1.1;
-    }
-
-    /* Tabela estilizada */
-    .dataframe { font-size: 13px !important; }
-
-    /* Barra de prioridade */
-    .priority-bar {
-        height: 8px;
-        border-radius: 4px;
-        margin-top: 8px;
-    }
-
-    /* Esconder menu hamburger e footer */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* Sidebar */
-    .css-1d391kg { background-color: #0a0a1a; }
-
-    /* Título principal */
-    .main-title {
-        font-size: 28px;
-        font-weight: 800;
-        background: linear-gradient(90deg, #ff4b4b, #ff8c00, #ffd700);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0;
-    }
-    .sub-title {
-        font-size: 14px;
-        color: #5a6785;
-        margin-top: 0;
-    }
+        padding: 20px 24px;
+        color: white;
+        min-height: 120px;
+    }}
+    .kpi-label {{
+        font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9);
+        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }}
+    .kpi-value {{
+        font-size: 38px; font-weight: 800; color: white; line-height: 1; margin-bottom: 4px;
+    }}
+    .kpi-sub {{ font-size: 12px; color: rgba(255,255,255,0.7); }}
+    .urgency-card {{
+        background: white; border-radius: 10px; padding: 16px 20px;
+        border-left: 5px solid; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 8px;
+    }}
+    .urgency-critical {{ border-left-color: {CARGLASS_RED}; }}
+    .urgency-high {{ border-left-color: #FF8C00; }}
+    .urgency-medium {{ border-left-color: #FFC107; }}
+    .urgency-low {{ border-left-color: #4CAF50; }}
+    .uc-label {{
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: {CARGLASS_GRAY_TEXT};
+    }}
+    .uc-value {{ font-size: 30px; font-weight: 800; line-height: 1.1; }}
+    .uc-sub {{ font-size: 11px; color: {CARGLASS_GRAY_TEXT}; }}
+    .section-title {{
+        font-size: 18px; font-weight: 700; color: {CARGLASS_DARK_TEXT};
+        margin: 24px 0 12px 0; padding-bottom: 8px;
+        border-bottom: 2px solid {CARGLASS_RED}; display: inline-block;
+    }}
+    .stat-table {{
+        width: 100%; border-collapse: separate; border-spacing: 0;
+        font-size: 13px; border-radius: 8px; overflow: hidden;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }}
+    .stat-table th {{
+        background: {CARGLASS_RED}; color: white; padding: 10px 14px;
+        text-align: left; font-weight: 600; font-size: 12px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }}
+    .stat-table td {{
+        padding: 10px 14px; border-bottom: 1px solid {CARGLASS_GRAY_LIGHT}; color: {CARGLASS_DARK_TEXT};
+    }}
+    .stat-table tr:nth-child(even) td {{ background: {CARGLASS_GRAY_BG}; }}
+    .stat-table tr:hover td {{ background: #E3F2FD; }}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    .stDeployButton {{display: none;}}
+    .stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
+    .stTabs [data-baseweb="tab"] {{ border-radius: 8px 8px 0 0; padding: 8px 20px; font-weight: 600; }}
+    .stTabs [aria-selected="true"] {{ background-color: {CARGLASS_RED} !important; color: white !important; }}
 </style>
 """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════
-# FUNÇÕES AUXILIARES
+# FUNÇÕES
 # ══════════════════════════════════════════════════════════════
 
 def normalize_classification(val):
-    """Normaliza as classificações para A, B, C, D"""
     if pd.isna(val) or str(val).strip() == "":
         return "Sem Classificação"
     val = str(val).strip().upper()
-    if "D" in val:
-        return "D"
-    elif "C" in val:
-        return "C"
-    elif "B" in val:
-        return "B"
-    elif "A" in val:
-        return "A"
+    for letter in ["D", "C", "B", "A"]:
+        if letter in val:
+            return letter
     return "Sem Classificação"
 
 
 def classify_urgency(row):
-    """
-    Classifica urgência com base nas regras de negócio:
-    - CRÍTICO: D + >=70  OU  D + >=66
-    - ALTO: C + >=66  OU  D + qualquer  OU  >=70 qualquer letra
-    - MÉDIO: C + >=45  OU  B + >=66
-    - BAIXO: Resto
-    """
     prob = row["ProbabilityComplaintInPercent"]
     letter = row["Letra"]
-
     if prob < 0:
         return "⚪ SEM DADOS"
-
-    # CRÍTICO
-    if letter == "D" and prob >= 66:
-        return "🔴 CRÍTICO"
     if letter == "D" and prob >= 50:
         return "🔴 CRÍTICO"
-
-    # ALTO
     if letter == "C" and prob >= 66:
         return "🟠 ALTO"
     if letter == "D":
         return "🟠 ALTO"
     if prob >= 70:
         return "🟠 ALTO"
-
-    # MÉDIO
     if letter == "C" and prob >= 45:
         return "🟡 MÉDIO"
     if letter == "B" and prob >= 66:
         return "🟡 MÉDIO"
     if prob >= 50:
         return "🟡 MÉDIO"
-
-    # BAIXO
     return "🟢 BAIXO"
 
 
 def urgency_sort_key(val):
-    order = {"🔴 CRÍTICO": 0, "🟠 ALTO": 1, "🟡 MÉDIO": 2, "🟢 BAIXO": 3, "⚪ SEM DADOS": 4}
-    return order.get(val, 5)
+    return {"🔴 CRÍTICO": 0, "🟠 ALTO": 1, "🟡 MÉDIO": 2, "🟢 BAIXO": 3, "⚪ SEM DADOS": 4}.get(val, 5)
 
 
-def get_action_recommendation(urgency, letter, prob):
-    """Retorna recomendação de ação baseada na urgência"""
-    actions = {
-        "🔴 CRÍTICO": "🚨 INTERVENÇÃO IMEDIATA — Contatar cliente em até 2h. Escalar para supervisor. Preparar resposta para canais públicos.",
-        "🟠 ALTO": "⚠️ AÇÃO EM 24H — Contato proativo obrigatório. Monitorar canais externos. Alinhar com equipe de qualidade.",
-        "🟡 MÉDIO": "📋 MONITORAMENTO ATIVO — Acompanhar evolução do caso. Contato preventivo recomendado em 48h.",
-        "🟢 BAIXO": "✅ MONITORAMENTO PADRÃO — Acompanhamento regular do fluxo operacional.",
-        "⚪ SEM DADOS": "❓ VERIFICAR — Dados incompletos. Reprocessar análise."
-    }
-    return actions.get(urgency, "—")
+def get_action(urgency):
+    return {
+        "🔴 CRÍTICO": "🚨 Intervenção imediata — Contatar em até 2h. Escalar para supervisor.",
+        "🟠 ALTO": "⚠️ Ação em 24h — Contato proativo obrigatório. Monitorar canais externos.",
+        "🟡 MÉDIO": "📋 Monitoramento ativo — Contato preventivo em 48h recomendado.",
+        "🟢 BAIXO": "✅ Monitoramento padrão — Acompanhamento regular.",
+        "⚪ SEM DADOS": "❓ Verificar — Dados incompletos, reprocessar análise."
+    }.get(urgency, "—")
 
 
 @st.cache_data(show_spinner=False)
 def load_and_process(uploaded_file):
-    """Carrega e processa o Excel"""
     df = pd.read_excel(uploaded_file, sheet_name="Consulta1", engine="openpyxl")
-
-    # Normalizar classificação
     df["Letra"] = df["Classification"].apply(normalize_classification)
-
-    # Garantir tipos corretos
     df["ProbabilityComplaintInPercent"] = pd.to_numeric(df["ProbabilityComplaintInPercent"], errors="coerce").fillna(-1).astype(int)
-
-    # Classificar urgência
     df["Urgência"] = df.apply(classify_urgency, axis=1)
-
-    # Ordenar por urgência e probabilidade
     df["_sort"] = df["Urgência"].apply(urgency_sort_key)
     df = df.sort_values(["_sort", "ProbabilityComplaintInPercent"], ascending=[True, False]).drop(columns=["_sort"])
-
-    # Recomendação
-    df["Ação Recomendada"] = df.apply(lambda r: get_action_recommendation(r["Urgência"], r["Letra"], r["ProbabilityComplaintInPercent"]), axis=1)
-
-    # Data formatada
+    df["Ação Recomendada"] = df["Urgência"].apply(get_action)
     if "CreationDate" in df.columns:
         df["CreationDate"] = pd.to_datetime(df["CreationDate"], errors="coerce")
         df["Data"] = df["CreationDate"].dt.strftime("%d/%m/%Y %H:%M")
-
     return df
 
 
+PLOTLY_LAYOUT = dict(
+    template="plotly_white",
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Segoe UI, sans-serif", size=13, color=CARGLASS_DARK_TEXT),
+    margin=dict(l=40, r=20, t=40, b=40),
+)
+
+URGENCY_COLORS = {
+    "🔴 CRÍTICO": CARGLASS_RED,
+    "🟠 ALTO": "#FF8C00",
+    "🟡 MÉDIO": "#FFC107",
+    "🟢 BAIXO": "#4CAF50",
+    "⚪ SEM DADOS": "#BDBDBD"
+}
+
+
 # ══════════════════════════════════════════════════════════════
-# INTERFACE PRINCIPAL
+# HEADER CARGLASS
 # ══════════════════════════════════════════════════════════════
 
-# Header
-st.markdown('<p class="main-title">🚨 SRO Risk Analyzer — Painel de Urgência</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Sistema de priorização de pedidos com risco de reclamação interna (SRO) e externalização (ReclameAqui / Procon)</p>', unsafe_allow_html=True)
-st.markdown("---")
+st.markdown("""
+<div class="carglass-header">
+    <h1>🚨 SRO Risk Analyzer</h1>
+    <p>Dashboard de Indicadores de Gestão — Priorização de Pedidos com Risco de Reclamação</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Upload
+# ══════════════════════════════════════════════════════════════
+# UPLOAD
+# ══════════════════════════════════════════════════════════════
+
 uploaded_file = st.file_uploader(
     "📎 Anexe o arquivo Excel com os dados de previsão (aba Consulta1)",
     type=["xlsx", "xls"],
-    help="O arquivo deve conter a aba 'Consulta1' com as colunas: OrderId, ProbabilityComplaintInPercent, Classification, etc."
+    help="O arquivo deve conter a aba 'Consulta1'."
 )
 
 if uploaded_file is None:
     st.info("👆 Faça upload do arquivo Excel para iniciar a análise.")
     st.stop()
 
-# Carregar dados
-with st.spinner("⏳ Processando dados... Isso pode levar alguns segundos para arquivos grandes."):
+with st.spinner("⏳ Processando dados..."):
     df = load_and_process(uploaded_file)
 
 total = len(df)
 valid = len(df[df["ProbabilityComplaintInPercent"] >= 0])
 
 # ══════════════════════════════════════════════════════════════
-# SIDEBAR — FILTROS
+# SIDEBAR
 # ══════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.header("🔧 Filtros")
+    st.markdown(f'<h2 style="color:{CARGLASS_RED};">🔧 Filtros</h2>', unsafe_allow_html=True)
 
-    # Filtro de urgência
     urgency_options = ["🔴 CRÍTICO", "🟠 ALTO", "🟡 MÉDIO", "🟢 BAIXO", "⚪ SEM DADOS"]
     selected_urgency = st.multiselect("Nível de Urgência", urgency_options, default=["🔴 CRÍTICO", "🟠 ALTO", "🟡 MÉDIO"])
 
-    # Filtro de letra
     letter_options = sorted(df["Letra"].unique())
     selected_letters = st.multiselect("Classificação (Letra)", letter_options, default=letter_options)
 
-    # Range de probabilidade
     prob_min, prob_max = st.slider("Faixa de Probabilidade (%)", -1, 100, (0, 100))
 
-    # Filtro de data
     if "CreationDate" in df.columns and df["CreationDate"].notna().any():
         min_date = df["CreationDate"].min().date()
         max_date = df["CreationDate"].max().date()
@@ -290,91 +249,98 @@ with st.sidebar:
     else:
         date_range = None
 
-    # Busca por OrderId
     search_order = st.text_input("🔍 Buscar OrderId", placeholder="Ex: 2963358")
 
     st.markdown("---")
-    st.markdown("**📊 Resumo do Arquivo**")
-    st.markdown(f"- Total de registros: **{total:,}**")
-    st.markdown(f"- Com dados válidos: **{valid:,}**")
-    st.markdown(f"- Sem classificação: **{total - valid:,}**")
+    st.markdown(f"**📊 Resumo do Arquivo**")
+    st.markdown(f"- Total: **{total:,}**")
+    st.markdown(f"- Válidos: **{valid:,}**")
+    st.markdown(f"- Sem dados: **{total - valid:,}**")
 
 # Aplicar filtros
 mask = (
-    (df["Urgência"].isin(selected_urgency)) &
-    (df["Letra"].isin(selected_letters)) &
+    df["Urgência"].isin(selected_urgency) &
+    df["Letra"].isin(selected_letters) &
     (df["ProbabilityComplaintInPercent"] >= prob_min) &
     (df["ProbabilityComplaintInPercent"] <= prob_max)
 )
-
 if date_range and len(date_range) == 2 and "CreationDate" in df.columns:
-    mask = mask & (
-        (df["CreationDate"].dt.date >= date_range[0]) &
-        (df["CreationDate"].dt.date <= date_range[1])
-    )
-
+    mask &= (df["CreationDate"].dt.date >= date_range[0]) & (df["CreationDate"].dt.date <= date_range[1])
 if search_order.strip():
-    mask = mask & (df["OrderId"].astype(str).str.contains(search_order.strip()))
+    mask &= df["OrderId"].astype(str).str.contains(search_order.strip())
 
-df_filtered = df[mask].copy()
+df_f = df[mask].copy()
 
 # ══════════════════════════════════════════════════════════════
-# KPIs PRINCIPAIS
+# KPIs ROXOS
 # ══════════════════════════════════════════════════════════════
 
-n_critico = len(df_filtered[df_filtered["Urgência"] == "🔴 CRÍTICO"])
-n_alto = len(df_filtered[df_filtered["Urgência"] == "🟠 ALTO"])
-n_medio = len(df_filtered[df_filtered["Urgência"] == "🟡 MÉDIO"])
-n_baixo = len(df_filtered[df_filtered["Urgência"] == "🟢 BAIXO"])
-n_sem = len(df_filtered[df_filtered["Urgência"] == "⚪ SEM DADOS"])
+n_crit = len(df_f[df_f["Urgência"] == "🔴 CRÍTICO"])
+n_alto = len(df_f[df_f["Urgência"] == "🟠 ALTO"])
+n_med = len(df_f[df_f["Urgência"] == "🟡 MÉDIO"])
+n_baixo = len(df_f[df_f["Urgência"] == "🟢 BAIXO"])
+pct_risk = round((n_crit + n_alto) / max(len(df_f), 1) * 100, 1)
+avg_prob = df_f[df_f["ProbabilityComplaintInPercent"] >= 0]["ProbabilityComplaintInPercent"].mean()
+avg_prob = round(avg_prob, 1) if not pd.isna(avg_prob) else 0
+pct_low = round(n_baixo / max(len(df_f), 1) * 100, 1)
 
-col1, col2, col3, col4, col5 = st.columns(5)
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    st.markdown(f"""<div class="kpi-card">
+        <div class="kpi-label">Total de Pedidos</div>
+        <div class="kpi-value">{len(df_f):,}</div>
+        <div class="kpi-sub">Nos filtros selecionados</div>
+    </div>""", unsafe_allow_html=True)
+with c2:
+    st.markdown(f"""<div class="kpi-card">
+        <div class="kpi-label">Taxa de Risco (Crítico+Alto)</div>
+        <div class="kpi-value">{pct_risk}%</div>
+        <div class="kpi-sub">{"⚠️ Acima do aceitável" if pct_risk > 15 else "✓ Dentro do objetivo"}</div>
+    </div>""", unsafe_allow_html=True)
+with c3:
+    st.markdown(f"""<div class="kpi-card">
+        <div class="kpi-label">Risco Baixo</div>
+        <div class="kpi-value">{pct_low}%</div>
+        <div class="kpi-sub">{"✓ Dentro do objetivo" if pct_low > 70 else "↓ Abaixo do ideal"}</div>
+    </div>""", unsafe_allow_html=True)
+with c4:
+    st.markdown(f"""<div class="kpi-card">
+        <div class="kpi-label">Probabilidade Média</div>
+        <div class="kpi-value">{avg_prob}%</div>
+        <div class="kpi-sub">Média geral de risco SRO</div>
+    </div>""", unsafe_allow_html=True)
 
-with col1:
-    st.markdown(f"""
-    <div class="metric-card" style="border-color: #ff4b4b;">
-        <div class="metric-label">🔴 CRÍTICO</div>
-        <div class="metric-value" style="color: #ff4b4b;">{n_critico}</div>
-        <div class="metric-sub">Intervenção imediata</div>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
-with col2:
-    st.markdown(f"""
-    <div class="metric-card" style="border-color: #ff8c00;">
-        <div class="metric-label">🟠 ALTO</div>
-        <div class="metric-value" style="color: #ff8c00;">{n_alto}</div>
-        <div class="metric-sub">Ação em 24h</div>
-    </div>
-    """, unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════
+# CARDS DE URGÊNCIA
+# ══════════════════════════════════════════════════════════════
 
-with col3:
-    st.markdown(f"""
-    <div class="metric-card" style="border-color: #ffd700;">
-        <div class="metric-label">🟡 MÉDIO</div>
-        <div class="metric-value" style="color: #ffd700;">{n_medio}</div>
-        <div class="metric-sub">Monitoramento ativo</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col4:
-    st.markdown(f"""
-    <div class="metric-card" style="border-color: #00c851;">
-        <div class="metric-label">🟢 BAIXO</div>
-        <div class="metric-value" style="color: #00c851;">{n_baixo}</div>
-        <div class="metric-sub">Monitoramento padrão</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col5:
-    pct_risk = round((n_critico + n_alto) / max(len(df_filtered), 1) * 100, 1)
-    st.markdown(f"""
-    <div class="metric-card" style="border-color: #7c4dff;">
-        <div class="metric-label">⚡ TAXA DE RISCO</div>
-        <div class="metric-value" style="color: #7c4dff;">{pct_risk}%</div>
-        <div class="metric-sub">Crítico + Alto / Total</div>
-    </div>
-    """, unsafe_allow_html=True)
+u1, u2, u3, u4 = st.columns(4)
+with u1:
+    st.markdown(f"""<div class="urgency-card urgency-critical">
+        <div class="uc-label">🔴 Crítico</div>
+        <div class="uc-value" style="color:{CARGLASS_RED};">{n_crit}</div>
+        <div class="uc-sub">Intervenção imediata</div>
+    </div>""", unsafe_allow_html=True)
+with u2:
+    st.markdown(f"""<div class="urgency-card urgency-high">
+        <div class="uc-label">🟠 Alto</div>
+        <div class="uc-value" style="color:#FF8C00;">{n_alto}</div>
+        <div class="uc-sub">Ação em 24h</div>
+    </div>""", unsafe_allow_html=True)
+with u3:
+    st.markdown(f"""<div class="urgency-card urgency-medium">
+        <div class="uc-label">🟡 Médio</div>
+        <div class="uc-value" style="color:#F9A825;">{n_med}</div>
+        <div class="uc-sub">Monitoramento ativo</div>
+    </div>""", unsafe_allow_html=True)
+with u4:
+    st.markdown(f"""<div class="urgency-card urgency-low">
+        <div class="uc-label">🟢 Baixo</div>
+        <div class="uc-value" style="color:#4CAF50;">{n_baixo}</div>
+        <div class="uc-sub">Monitoramento padrão</div>
+    </div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -382,251 +348,186 @@ st.markdown("<br>", unsafe_allow_html=True)
 # GRÁFICOS — LINHA 1
 # ══════════════════════════════════════════════════════════════
 
-g1, g2 = st.columns(2)
+g1, g2 = st.columns([3, 2])
 
 with g1:
-    st.subheader("📊 Matriz de Risco — Probabilidade × Letra")
+    st.markdown('<div class="section-title">📊 Análise por Classificação (Letra)</div>', unsafe_allow_html=True)
+    df_valid = df_f[df_f["Letra"].isin(["A", "B", "C", "D"])].copy()
+    if not df_valid.empty:
+        letter_stats = df_valid.groupby("Letra").agg(
+            Qtd=("OrderId", "count"), Media=("ProbabilityComplaintInPercent", "mean")
+        ).reindex(["A", "B", "C", "D"]).fillna(0)
 
-    # Heatmap: contagem por Letra x faixa de probabilidade
-    df_valid = df_filtered[df_filtered["ProbabilityComplaintInPercent"] >= 0].copy()
-    bins = [0, 20, 30, 45, 50, 66, 75, 100]
-    labels = ["0-20", "21-30", "31-45", "46-50", "51-66", "67-75", "76-100"]
-    df_valid["Faixa"] = pd.cut(df_valid["ProbabilityComplaintInPercent"], bins=bins, labels=labels, include_lowest=True, right=True)
-
-    letter_order = ["A", "B", "C", "D"]
-    df_heat = df_valid[df_valid["Letra"].isin(letter_order)]
-
-    if not df_heat.empty:
-        heat_pivot = df_heat.groupby(["Letra", "Faixa"], observed=True).size().reset_index(name="Qtd")
-        heat_pivot = heat_pivot.pivot(index="Letra", columns="Faixa", values="Qtd").fillna(0).astype(int)
-        heat_pivot = heat_pivot.reindex(index=letter_order, fill_value=0)
-        heat_pivot = heat_pivot.reindex(columns=labels, fill_value=0)
-
-        fig_heat = px.imshow(
-            heat_pivot.values,
-            labels=dict(x="Faixa de Probabilidade (%)", y="Letra (Externalização)", color="Pedidos"),
-            x=heat_pivot.columns.tolist(),
-            y=heat_pivot.index.tolist(),
-            color_continuous_scale=["#1a1a2e", "#ff8c00", "#ff4b4b"],
-            text_auto=True,
-            aspect="auto"
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            x=letter_stats.index, y=letter_stats["Qtd"],
+            marker_color=CARGLASS_RED, text=letter_stats["Qtd"].astype(int),
+            textposition="outside", name="Pedidos"
+        ))
+        fig_bar.add_trace(go.Scatter(
+            x=letter_stats.index, y=letter_stats["Media"],
+            mode="lines+markers+text",
+            text=[f"{v:.0f}%" for v in letter_stats["Media"]],
+            textposition="top center",
+            line=dict(color=CARGLASS_PURPLE, width=2, dash="dash"),
+            marker=dict(size=8, color=CARGLASS_PURPLE),
+            name="Prob. Média (%)", yaxis="y2"
+        ))
+        fig_bar.update_layout(
+            **PLOTLY_LAYOUT, height=380,
+            yaxis=dict(title="Quantidade de Pedidos"),
+            yaxis2=dict(title="Probabilidade Média (%)", overlaying="y", side="right", range=[0, 100]),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        fig_heat.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            height=380,
-            margin=dict(l=40, r=20, t=30, b=40),
-            font=dict(size=13)
-        )
-        st.plotly_chart(fig_heat, use_container_width=True)
-    else:
-        st.info("Sem dados válidos para o heatmap.")
+        st.plotly_chart(fig_bar, use_container_width=True)
 
 with g2:
-    st.subheader("🎯 Distribuição por Urgência")
+    st.markdown('<div class="section-title">📋 Estatísticas por Letra</div>', unsafe_allow_html=True)
+    if not df_valid.empty:
+        stats = df_valid.groupby("Letra").agg(
+            Total=("OrderId", "count"), Prob_Media=("ProbabilityComplaintInPercent", "mean"),
+        ).reindex(["A", "B", "C", "D"]).fillna(0)
+        for letter in ["A", "B", "C", "D"]:
+            sub = df_valid[df_valid["Letra"] == letter]
+            stats.loc[letter, "Risco_Baixo"] = round(len(sub[sub["Urgência"] == "🟢 BAIXO"]) / max(len(sub), 1) * 100, 0)
 
-    urgency_counts = df_filtered["Urgência"].value_counts().reset_index()
-    urgency_counts.columns = ["Urgência", "Qtd"]
+        rows_html = ""
+        for letter in ["A", "B", "C", "D"]:
+            if letter in stats.index:
+                r = stats.loc[letter]
+                rows_html += f"<tr><td><strong>{letter}</strong></td><td>{int(r['Prob_Media'])}%</td><td>{int(r['Total']):,}</td><td>{int(r['Risco_Baixo'])}%</td></tr>"
 
-    color_map = {
-        "🔴 CRÍTICO": "#ff4b4b",
-        "🟠 ALTO": "#ff8c00",
-        "🟡 MÉDIO": "#ffd700",
-        "🟢 BAIXO": "#00c851",
-        "⚪ SEM DADOS": "#555555"
-    }
-
-    fig_donut = px.pie(
-        urgency_counts,
-        values="Qtd",
-        names="Urgência",
-        color="Urgência",
-        color_discrete_map=color_map,
-        hole=0.55
-    )
-    fig_donut.update_traces(textposition="outside", textinfo="label+value+percent", textfont_size=12)
-    fig_donut.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        height=380,
-        margin=dict(l=20, r=20, t=30, b=20),
-        showlegend=False
-    )
-    st.plotly_chart(fig_donut, use_container_width=True)
+        st.markdown(f"""<table class="stat-table">
+            <tr><th>Letra</th><th>Prob. Média</th><th>Total Pedidos</th><th>% Risco Baixo</th></tr>
+            {rows_html}
+        </table>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
 # GRÁFICOS — LINHA 2
 # ══════════════════════════════════════════════════════════════
 
+st.markdown("<br>", unsafe_allow_html=True)
 g3, g4 = st.columns(2)
 
 with g3:
-    st.subheader("📈 Distribuição de Probabilidade (%)")
-
-    df_prob = df_filtered[df_filtered["ProbabilityComplaintInPercent"] >= 0]
+    st.markdown('<div class="section-title">📈 Distribuição de Probabilidade</div>', unsafe_allow_html=True)
+    df_prob = df_f[df_f["ProbabilityComplaintInPercent"] >= 0]
     if not df_prob.empty:
         fig_hist = px.histogram(
-            df_prob,
-            x="ProbabilityComplaintInPercent",
-            color="Letra",
-            nbins=20,
-            color_discrete_map={"A": "#00c851", "B": "#ffd700", "C": "#ff8c00", "D": "#ff4b4b", "Sem Classificação": "#555"},
-            barmode="stack",
-            labels={"ProbabilityComplaintInPercent": "Probabilidade (%)", "count": "Pedidos"}
+            df_prob, x="ProbabilityComplaintInPercent", color="Letra", nbins=20,
+            color_discrete_map={"A": "#4CAF50", "B": "#FFC107", "C": "#FF8C00", "D": CARGLASS_RED, "Sem Classificação": "#BDBDBD"},
+            barmode="stack", labels={"ProbabilityComplaintInPercent": "Probabilidade (%)", "count": "Pedidos"}
         )
-        fig_hist.add_vline(x=66, line_dash="dash", line_color="#ff4b4b", annotation_text="Limiar Crítico (66%)")
-        fig_hist.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            height=380,
-            margin=dict(l=40, r=20, t=30, b=40),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
+        fig_hist.add_vline(x=66, line_dash="dash", line_color=CARGLASS_RED, annotation_text="Limiar 66%", annotation_font_color=CARGLASS_RED)
+        fig_hist.update_layout(**PLOTLY_LAYOUT, height=380,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_hist, use_container_width=True)
 
 with g4:
-    st.subheader("📅 Volume Diário por Urgência")
+    st.markdown('<div class="section-title">🎯 Distribuição por Urgência</div>', unsafe_allow_html=True)
+    urg_counts = df_f["Urgência"].value_counts().reset_index()
+    urg_counts.columns = ["Urgência", "Qtd"]
+    fig_donut = px.pie(urg_counts, values="Qtd", names="Urgência", color="Urgência",
+        color_discrete_map=URGENCY_COLORS, hole=0.55)
+    fig_donut.update_traces(textposition="outside", textinfo="label+value+percent", textfont_size=12)
+    fig_donut.update_layout(**PLOTLY_LAYOUT, height=380, showlegend=False)
+    st.plotly_chart(fig_donut, use_container_width=True)
 
-    if "CreationDate" in df_filtered.columns and df_filtered["CreationDate"].notna().any():
-        df_daily = df_filtered[df_filtered["CreationDate"].notna()].copy()
+# ══════════════════════════════════════════════════════════════
+# GRÁFICOS — LINHA 3
+# ══════════════════════════════════════════════════════════════
+
+st.markdown("<br>", unsafe_allow_html=True)
+g5, g6 = st.columns(2)
+
+with g5:
+    st.markdown('<div class="section-title">📅 Volume Diário por Urgência</div>', unsafe_allow_html=True)
+    if "CreationDate" in df_f.columns and df_f["CreationDate"].notna().any():
+        df_daily = df_f[df_f["CreationDate"].notna()].copy()
         df_daily["Dia"] = df_daily["CreationDate"].dt.date
+        daily = df_daily.groupby(["Dia", "Urgência"]).size().reset_index(name="Qtd")
+        fig_daily = px.bar(daily, x="Dia", y="Qtd", color="Urgência",
+            color_discrete_map=URGENCY_COLORS, barmode="stack", labels={"Qtd": "Pedidos", "Dia": "Data"})
+        fig_daily.update_layout(**PLOTLY_LAYOUT, height=400,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        st.plotly_chart(fig_daily, use_container_width=True)
 
-        daily_counts = df_daily.groupby(["Dia", "Urgência"]).size().reset_index(name="Qtd")
-
-        fig_line = px.bar(
-            daily_counts,
-            x="Dia",
-            y="Qtd",
-            color="Urgência",
-            color_discrete_map=color_map,
-            barmode="stack",
-            labels={"Qtd": "Pedidos", "Dia": "Data"}
-        )
-        fig_line.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            height=380,
-            margin=dict(l=40, r=20, t=30, b=40),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-    else:
-        st.info("Coluna de data não disponível.")
-
-# ══════════════════════════════════════════════════════════════
-# GRÁFICO — SCATTER: RISCO BIDIMENSIONAL
-# ══════════════════════════════════════════════════════════════
-
-st.subheader("🗺️ Mapa Bidimensional de Risco — Cada ponto é um pedido")
-
-df_scatter = df_filtered[(df_filtered["ProbabilityComplaintInPercent"] >= 0) & (df_filtered["Letra"].isin(["A","B","C","D"]))].copy()
-
-if not df_scatter.empty:
-    letter_num = {"A": 1, "B": 2, "C": 3, "D": 4}
-    df_scatter["Letra_Num"] = df_scatter["Letra"].map(letter_num)
-
-    # Jitter para não sobrepor pontos
-    np.random.seed(42)
-    df_scatter["Prob_Jitter"] = df_scatter["ProbabilityComplaintInPercent"] + np.random.uniform(-2, 2, len(df_scatter))
-    df_scatter["Letra_Jitter"] = df_scatter["Letra_Num"] + np.random.uniform(-0.15, 0.15, len(df_scatter))
-
-    fig_scatter = px.scatter(
-        df_scatter,
-        x="Prob_Jitter",
-        y="Letra_Jitter",
-        color="Urgência",
-        color_discrete_map=color_map,
-        hover_data={"OrderId": True, "ProbabilityComplaintInPercent": True, "Letra": True, "Urgência": True, "Prob_Jitter": False, "Letra_Jitter": False},
-        labels={"Prob_Jitter": "Probabilidade de Reclamação (%)", "Letra_Jitter": "Risco de Externalização"},
-        opacity=0.6
-    )
-
-    # Zona crítica
-    fig_scatter.add_shape(type="rect", x0=66, x1=100, y0=3.5, y1=4.5, fillcolor="rgba(255,75,75,0.1)", line=dict(color="#ff4b4b", dash="dash"))
-    fig_scatter.add_annotation(x=83, y=4.45, text="ZONA CRÍTICA", showarrow=False, font=dict(color="#ff4b4b", size=11, family="Arial Black"))
-
-    fig_scatter.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        height=450,
-        margin=dict(l=60, r=20, t=30, b=60),
-        yaxis=dict(tickvals=[1, 2, 3, 4], ticktext=["A - Improvável", "B - Possível", "C - Provável", "D - Muito Provável"]),
-        xaxis=dict(range=[-5, 105]),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    st.plotly_chart(fig_scatter, use_container_width=True)
+with g6:
+    st.markdown('<div class="section-title">🗺️ Mapa Bidimensional de Risco</div>', unsafe_allow_html=True)
+    df_sc = df_f[(df_f["ProbabilityComplaintInPercent"] >= 0) & (df_f["Letra"].isin(["A","B","C","D"]))].copy()
+    if not df_sc.empty:
+        letter_num = {"A": 1, "B": 2, "C": 3, "D": 4}
+        df_sc["Letra_Num"] = df_sc["Letra"].map(letter_num)
+        np.random.seed(42)
+        df_sc["Prob_J"] = df_sc["ProbabilityComplaintInPercent"] + np.random.uniform(-2, 2, len(df_sc))
+        df_sc["Letra_J"] = df_sc["Letra_Num"] + np.random.uniform(-0.15, 0.15, len(df_sc))
+        fig_sc = px.scatter(df_sc, x="Prob_J", y="Letra_J", color="Urgência",
+            color_discrete_map=URGENCY_COLORS, opacity=0.5,
+            hover_data={"OrderId": True, "ProbabilityComplaintInPercent": True, "Letra": True, "Prob_J": False, "Letra_J": False})
+        fig_sc.add_shape(type="rect", x0=66, x1=100, y0=3.5, y1=4.5,
+            fillcolor="rgba(211,47,47,0.08)", line=dict(color=CARGLASS_RED, dash="dash"))
+        fig_sc.add_annotation(x=83, y=4.45, text="ZONA CRÍTICA", showarrow=False,
+            font=dict(color=CARGLASS_RED, size=11, family="Arial Black"))
+        fig_sc.update_layout(**PLOTLY_LAYOUT, height=400,
+            yaxis=dict(tickvals=[1,2,3,4], ticktext=["A - Improvável","B - Possível","C - Provável","D - Muito Provável"]),
+            xaxis=dict(title="Probabilidade (%)", range=[-5, 105]),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        st.plotly_chart(fig_sc, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════
-# TABELA DE PEDIDOS PRIORITÁRIOS
+# TABELAS
 # ══════════════════════════════════════════════════════════════
 
 st.markdown("---")
-st.subheader("📋 Lista de Pedidos Prioritários")
+st.markdown('<div class="section-title">📋 Lista de Pedidos Prioritários</div>', unsafe_allow_html=True)
 
-# Tabs por urgência
-tab_crit, tab_alto, tab_medio, tab_todos = st.tabs(["🔴 Críticos", "🟠 Alto Risco", "🟡 Médio Risco", "📄 Todos os Filtrados"])
+tab_crit, tab_alto, tab_medio, tab_todos = st.tabs(["🔴 Críticos", "🟠 Alto Risco", "🟡 Médio", "📄 Todos"])
 
 display_cols = ["OrderId", "ProbabilityComplaintInPercent", "Letra", "Urgência", "Ação Recomendada", "Conclusion"]
-if "Data" in df_filtered.columns:
+if "Data" in df_f.columns:
     display_cols.insert(5, "Data")
-
-rename_map = {
-    "OrderId": "Pedido",
-    "ProbabilityComplaintInPercent": "Prob. (%)",
-    "Letra": "Letra",
-    "Urgência": "Urgência",
-    "Ação Recomendada": "Ação Recomendada",
-    "Data": "Data Criação",
-    "Conclusion": "Conclusão IA"
-}
-
-available_cols = [c for c in display_cols if c in df_filtered.columns]
+available = [c for c in display_cols if c in df_f.columns]
+renames = {"OrderId": "Pedido", "ProbabilityComplaintInPercent": "Prob. (%)", "Ação Recomendada": "Ação",
+           "Data": "Data Criação", "Conclusion": "Conclusão IA"}
 
 with tab_crit:
-    df_crit = df_filtered[df_filtered["Urgência"] == "🔴 CRÍTICO"][available_cols].rename(columns=rename_map)
-    if df_crit.empty:
+    dc = df_f[df_f["Urgência"] == "🔴 CRÍTICO"][available].rename(columns=renames)
+    if dc.empty:
         st.success("✅ Nenhum pedido crítico nos filtros atuais!")
     else:
-        st.error(f"🚨 **{len(df_crit)} pedidos precisam de intervenção IMEDIATA**")
-        st.dataframe(df_crit, use_container_width=True, height=400)
+        st.error(f"🚨 **{len(dc)} pedidos precisam de intervenção IMEDIATA**")
+        st.dataframe(dc, use_container_width=True, height=400)
 
 with tab_alto:
-    df_alto_tab = df_filtered[df_filtered["Urgência"] == "🟠 ALTO"][available_cols].rename(columns=rename_map)
-    if df_alto_tab.empty:
-        st.success("✅ Nenhum pedido de alto risco nos filtros atuais!")
+    da = df_f[df_f["Urgência"] == "🟠 ALTO"][available].rename(columns=renames)
+    if da.empty:
+        st.success("✅ Nenhum pedido de alto risco!")
     else:
-        st.warning(f"⚠️ **{len(df_alto_tab)} pedidos precisam de ação em 24h**")
-        st.dataframe(df_alto_tab, use_container_width=True, height=400)
+        st.warning(f"⚠️ **{len(da)} pedidos precisam de ação em 24h**")
+        st.dataframe(da, use_container_width=True, height=400)
 
 with tab_medio:
-    df_medio_tab = df_filtered[df_filtered["Urgência"] == "🟡 MÉDIO"][available_cols].rename(columns=rename_map)
-    if df_medio_tab.empty:
-        st.info("Nenhum pedido de risco médio nos filtros atuais.")
+    dm = df_f[df_f["Urgência"] == "🟡 MÉDIO"][available].rename(columns=renames)
+    if dm.empty:
+        st.info("Nenhum pedido de risco médio.")
     else:
-        st.info(f"📋 **{len(df_medio_tab)} pedidos em monitoramento ativo**")
-        st.dataframe(df_medio_tab, use_container_width=True, height=400)
+        st.info(f"📋 **{len(dm)} pedidos em monitoramento ativo**")
+        st.dataframe(dm, use_container_width=True, height=400)
 
 with tab_todos:
-    df_todos = df_filtered[available_cols].rename(columns=rename_map)
-    st.info(f"📊 **{len(df_todos)} pedidos no filtro atual**")
-    st.dataframe(df_todos, use_container_width=True, height=500)
+    dt = df_f[available].rename(columns=renames)
+    st.info(f"📊 **{len(dt)} pedidos no filtro atual**")
+    st.dataframe(dt, use_container_width=True, height=500)
 
 # ══════════════════════════════════════════════════════════════
-# DETALHAMENTO DE PEDIDO INDIVIDUAL
+# DETALHAMENTO INDIVIDUAL
 # ══════════════════════════════════════════════════════════════
 
 st.markdown("---")
-st.subheader("🔎 Detalhamento de Pedido Individual")
+st.markdown('<div class="section-title">🔎 Detalhamento de Pedido Individual</div>', unsafe_allow_html=True)
 
-order_list = df_filtered["OrderId"].unique().tolist()
-
+order_list = df_f["OrderId"].unique().tolist()
 if order_list:
-    # Se buscou por OrderId, pré-selecionar
     default_idx = 0
     if search_order.strip():
         matches = [i for i, o in enumerate(order_list) if search_order.strip() in str(o)]
@@ -634,19 +535,15 @@ if order_list:
             default_idx = matches[0]
 
     selected_order = st.selectbox("Selecione o pedido:", order_list, index=default_idx)
-
-    row = df_filtered[df_filtered["OrderId"] == selected_order].iloc[0]
+    row = df_f[df_f["OrderId"] == selected_order].iloc[0]
 
     d1, d2, d3 = st.columns(3)
-
     with d1:
         st.metric("Pedido", f"#{int(row['OrderId'])}")
         st.metric("Probabilidade SRO", f"{row['ProbabilityComplaintInPercent']}%")
-
     with d2:
         st.metric("Classificação", row["Letra"])
         st.metric("Urgência", row["Urgência"])
-
     with d3:
         if "Data" in row and pd.notna(row.get("Data")):
             st.metric("Data", row["Data"])
@@ -657,11 +554,9 @@ if order_list:
     if pd.notna(row.get("Conclusion")):
         with st.expander("📄 Conclusão Completa da IA", expanded=False):
             st.write(row["Conclusion"])
-
     if pd.notna(row.get("ClassificationJustification")):
         with st.expander("📝 Justificativa da Classificação", expanded=False):
             st.write(row["ClassificationJustification"])
-
     if pd.notna(row.get("PercentJustification")):
         with st.expander("📊 Justificativa do Percentual", expanded=False):
             st.write(row["PercentJustification"])
@@ -671,8 +566,6 @@ if order_list:
 # ══════════════════════════════════════════════════════════════
 st.markdown("---")
 st.markdown(
-    '<p style="text-align:center; color:#5a6785; font-size:12px;">'
-    'SRO Risk Analyzer Dashboard — Desenvolvido para priorização inteligente de pedidos com risco de reclamação'
-    '</p>',
-    unsafe_allow_html=True
-)
+    f'<p style="text-align:center; color:{CARGLASS_GRAY_TEXT}; font-size:12px;">'
+    'SRO Risk Analyzer Dashboard — Priorização inteligente de pedidos com risco de reclamação'
+    '</p>', unsafe_allow_html=True)
